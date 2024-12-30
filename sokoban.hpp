@@ -127,6 +127,16 @@ struct State {
     };
 };
 
+// 修改方向数组的定义，使用模板
+template<typename T>
+T safeAdd(T a, int b) {
+    if (b < 0) {
+        return static_cast<T>(static_cast<int64_t>(a) - static_cast<int64_t>(-b));
+    } else {
+        return static_cast<T>(static_cast<int64_t>(a) + static_cast<int64_t>(b));
+    }
+}
+
 // 修改 Solution 类为模板类
 template<typename T>
 class Solution {
@@ -676,11 +686,11 @@ private:
         box_to_target_distance_cache[moved_box] = min_dist;
     }
 
-    void expandStateAStar(const State<T>& current, T n, T m, 
-                         const vector<vector<char>>& grid,
-                         unordered_set<State<T>, typename State<T>::Hash>& visited,
-                         priority_queue<pair<State<T>, vector<char>>>& q,
-                         const vector<char>& path) {
+    void expandStateAStar(const State<T>& current, T n, T m,
+                        const vector<vector<char>>& grid,
+                        unordered_set<State<T>, typename State<T>::Hash>& visited,
+                        priority_queue<pair<State<T>, vector<char>>>& q,
+                        const vector<char>& path) {
         
         static vector<T> new_boxes;  // 静态分配避免重复创建
         new_boxes.reserve(current.boxes.size());
@@ -688,8 +698,8 @@ private:
         auto [r, c] = toCoords(current.player, m);
         
         for (int i = 0; i < 4; ++i) {
-            T new_r = r + static_cast<T>(directions[i][0]);
-            T new_c = c + static_cast<T>(directions[i][1]);
+            T new_r = safeAdd(r, directions[i][0]);
+            T new_c = safeAdd(c, directions[i][1]);
             T new_player = toIndex(new_r, new_c, m);
 
             if (new_r >= n || new_c >= m || grid[new_r][new_c] == '#') {
@@ -702,8 +712,9 @@ private:
             for (T j = 0; j < new_boxes.size(); ++j) {
                 if (new_boxes[j] == new_player) {
                     auto [box_r, box_c] = toCoords(new_boxes[j], m);
-                    T box_new_r = box_r + static_cast<T>(directions[i][0]);
-                    T box_new_c = box_c + static_cast<T>(directions[i][1]);
+                    // 使用 safeAdd 来计算新的箱子位置
+                    T box_new_r = safeAdd(box_r, directions[i][0]);
+                    T box_new_c = safeAdd(box_c, directions[i][1]);
                     T new_box_pos = toIndex(box_new_r, box_new_c, m);
 
                     if (box_new_r >= n || box_new_c >= m || 
@@ -866,8 +877,8 @@ private:
                     // 检查是否有箱子可以到达相邻的O点
                     for (const auto& box : boxes) {
                         for (const auto& dir : directions) {
-                            T check_r = r + static_cast<T>(dir[0]);
-                            T check_c = c + static_cast<T>(dir[1]);
+                            T check_r = safeAdd(r, dir[0]);
+                            T check_c = safeAdd(c, dir[1]);
                             
                             if (check_r < current_grid.size() && check_c < current_grid[0].size() && 
                                 current_grid[check_r][check_c] == 'O') {
@@ -1001,8 +1012,8 @@ private:
                         if (grid[r][c] == 'T') {
                             temp_grid[r][c] = 'Y';  // 墙角目标点标记
                             for (const auto& dir : directions) {
-                                T new_r = r + static_cast<T>(dir[0]);
-                                T new_c = c + static_cast<T>(dir[1]);
+                                T new_r = safeAdd(r, dir[0]);
+                                T new_c = safeAdd(c, dir[1]);
                                 if (new_r < grid.size() && new_c < grid[0].size() && 
                                     temp_grid[new_r][new_c] != '#' && 
                                     temp_grid[new_r][new_c] != 'X' &&
